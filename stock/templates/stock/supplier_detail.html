@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }}{% endblock %}
+{% block nav_fournisseurs %}active text-white{% endblock %}
+{% block page_title %}Fiche fournisseur{% endblock %}
+{% block page_subtitle %}{{ object.name }}{% endblock %}
+
+{% block header_actions %}
+{% if perms.stock.change_supplier %}
+<a href="/fournisseurs/{{ object.pk }}/modifier/" class="btn btn-primary text-sm"><i class="fa-solid fa-pencil"></i> Modifier</a>
+{% endif %}
+<a href="{% url 'stock:supplier_list' %}" class="btn btn-secondary text-sm"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="space-y-5">
+    <div class="card p-6 text-center bg-white shadow-sm border border-night-200">
+      <div class="w-20 h-20 rounded-2xl bg-night-100 flex items-center justify-center text-night-700 font-display font-600 text-4xl mx-auto mb-4">
+        {{ object.name|first|upper }}
+      </div>
+      <h2 class="text-xl font-display font-600 text-night-800 mb-1">{{ object.name }}</h2>
+      
+      <div class="mt-5 space-y-3 text-sm text-left">
+        {% if object.email %}
+        <a href="mailto:{{ object.email }}" class="flex items-center gap-3 p-2.5 hover:bg-night-50 rounded-lg transition-colors">
+          <i class="fa-solid fa-envelope text-indigo w-4 text-center"></i>
+          <span class="text-night-600 truncate">{{ object.email }}</span>
+        </a>
+        {% endif %}
+        {% if object.phone %}
+        <div class="flex items-center gap-3 p-2.5">
+          <i class="fa-solid fa-phone text-indigo w-4 text-center"></i>
+          <span class="text-night-600">{{ object.phone }}</span>
+        </div>
+        {% endif %}
+        {% if object.address %}
+        <div class="flex items-center gap-3 p-2.5">
+          <i class="fa-solid fa-location-dot text-indigo w-4 text-center"></i>
+          <span class="text-night-600">{{ object.address }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card p-5 bg-white shadow-sm border border-night-200">
+      <h3 class="font-600 text-night-800 text-sm mb-3">Statistiques</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-night-400">Produits référencés</span>
+          <span class="font-600 text-night-800">{{ supplier.products.count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2">
+    <div class="card overflow-hidden bg-white shadow-sm border border-night-200">
+      <div class="px-6 py-5 border-b border-night-200 flex items-center justify-between">
+        <h3 class="font-display font-600 text-night-800">Produits fournis</h3>
+        <a href="/produits/?fournisseur={{ object.pk }}" class="text-xs text-indigo hover:underline">Voir tous</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-night-50">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs text-night-400 font-500">Produit</th>
+              <th class="px-5 py-3 text-right text-xs text-night-400 font-500">Prix</th>
+              <th class="px-5 py-3 text-center text-xs text-night-400 font-500">Stock</th>
+              <th class="px-5 py-3 text-center text-xs text-night-400 font-500">Statut</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-night-100">
+            {% for produit in object.products.all %}
+            <tr class="table-row hover:bg-night-50/50 transition-colors">
+              <td class="px-5 py-3">
+                <a href="{% url 'stock:product_detail' produit.pk %}" class="font-500 text-night-800 hover:text-indigo">{{ produit.name }}</a>
+                <p class="text-xs text-night-400 font-mono">{{ produit.reference }}</p>
+              </td>
+              
+              <td class="px-5 py-3 text-right font-display font-600 text-night-800">
+                {{ produit.price|floatformat:0 }} F
+              </td>
+              
+              <td class="px-5 py-3 text-center font-display font-600 {% if produit.quantity_in_stock <= produit.min_threshold %}text-rose font-bold{% else %}text-night-800{% endif %}">
+                {{ produit.quantity_in_stock }}
+              </td>
+              
+              <td class="px-5 py-3 text-center">
+                {% if produit.quantity_in_stock == 0 %}
+                  <span class="badge bg-rose-light text-rose-dark border border-rose/20">Rupture</span>
+                {% elif produit.quantity_in_stock <= produit.min_threshold %}
+                  <span class="badge bg-amber-light text-amber-dark border border-amber/20">Bas</span>
+                {% else %}
+                  <span class="badge bg-emerald-light text-emerald-dark border border-emerald/20">OK</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-5 py-10 text-center text-night-400 text-sm">
+                <i class="fa-solid fa-inbox text-2xl text-night-300 block mb-2"></i>Aucun produit référencé pour ce fournisseur.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

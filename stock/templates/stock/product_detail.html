@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ object.nom }}{% endblock %}
+{% block nav_produits %}active text-white{% endblock %}
+{% block page_title %}Détail produit{% endblock %}
+{% block page_subtitle %}{{ object.reference }}{% endblock %}
+
+{% block header_actions %}
+{% if perms.stock.change_product %}
+<a href="{% url 'stock:product_edit' object.pk%}" class="btn btn-primary text-sm">
+  <i class="fa-solid fa-pencil"></i> Modifier
+</a>
+{% endif %}
+<a href="{% url 'stock:product_list'%}" class="btn btn-secondary text-sm">
+  <i class="fa-solid fa-arrow-left"></i> Retour
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Colonne principale -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Fiche produit -->
+    <div class="card p-6">
+      <div class="flex items-start gap-5 mb-6">
+        
+        <div class="w-24 h-24 rounded-xl bg-indigo/10 flex items-center justify-center text-indigo text-3xl font-display font-600">
+          {{ object.name|first|upper }}
+        </div>
+       
+        <div class="flex-1">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-xl font-display font-600 text-night-800">{{ object.name }}</h2>
+              <p class="text-night-400 text-sm font-mono mt-0.5">{{ object.reference }}</p>
+            </div>
+            {% if object.quantity_in_stock == 0 %}
+            <span class="badge bg-rose/10 text-rose-dark">Rupture de stock</span>
+            {% elif object.quantity_in_stock <= object.min_threshold %}
+            <span class="badge bg-amber/15 text-amber-dark"><i class="fa-solid fa-triangle-exclamation text-xs mr-1"></i> Stock bas</span>
+            {% else %}
+            <span class="badge bg-emerald/10 text-emerald-dark"><i class="fa-solid fa-check text-xs mr-1"></i> En stock</span>
+            {% endif %}
+          </div>
+         
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-5 border-t border-night-200">
+        <div>
+          <p class="text-xs text-night-400 mb-1">Prix unitaire</p>
+          <p class="font-display font-600 text-night-800 text-lg">{{ object.price|floatformat:0 }} F</p>
+        </div>
+        <div>
+          <p class="text-xs text-night-400 mb-1">Quantité en stock</p>
+          <p class="font-display font-600 {% if object.quantite_stock <= object.seuil_alerte %}text-amber{% else %}text-night-800{% endif %} text-lg">
+            {{ object.quantity_in_stock }} 
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-night-400 mb-1">Seuil d'alerte</p>
+          <p class="font-display font-600 text-amber text-lg">{{ object.min_threshold }}</p>
+        </div>
+      
+      </div>
+
+      <!-- Barre de stock -->
+      {% if object.quantite_stock > 0 %}
+      <div class="mt-5 pt-5 border-t border-night-200">
+        <div class="flex justify-between text-xs text-night-400 mb-1.5">
+          <span>Niveau de stock</span>
+          <span>{{ object.quantite_in_stock }} / {{ object.stock_max|default:"100" }}</span>
+        </div>
+        <div class="h-2 bg-night-200 rounded-full overflow-hidden">
+          <div class="h-full rounded-full {% if object.quantite_stock <= object.seuil_alerte %}bg-amber{% else %}bg-emerald{% endif %}"
+            style="width: {% widthratio object.quantite_stock object.stock_max|default:100 100 %}%"></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Historique des mouvements -->
+    <div class="card overflow-hidden">
+      <div class="px-6 py-5 border-b border-night-200 flex items-center justify-between">
+        <h3 class="font-display font-600 text-night-800">Historique des mouvements</h3>
+       
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-night-50">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs text-night-400 font-500">Date</th>
+              <th class="px-5 py-3 text-left text-xs text-night-400 font-500">Type</th>
+              <th class="px-5 py-3 text-right text-xs text-night-400 font-500">Quantité</th>
+              <th class="px-5 py-3 text-left text-xs text-night-400 font-500">Motif</th>
+              <th class="px-5 py-3 text-left text-xs text-night-400 font-500">Opérateur</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-night-100">
+            {% for mvt in object.movements.all|dictsortreversed:"date"  %}
+            <tr class="table-row">
+              <td class="px-5 py-3 text-night-500 text-xs">{{ mvt.date|date:"d/m/Y H:i" }}</td>
+              <td class="px-5 py-3">
+                {% if mvt.movement_type == 'IN' %}
+                <span class="badge bg-emerald/10 text-emerald-dark"><i class="fa-solid fa-arrow-down text-xs mr-1"></i>Entrée</span>
+                {% else %}
+                <span class="badge bg-rose/10 text-rose-dark"><i class="fa-solid fa-arrow-up text-xs mr-1"></i>Sortie</span>
+                {% endif %}
+              </td>
+              <td class="px-5 py-3 text-right font-display font-600 {% if mvt.type == 'entree' %}text-emerald{% else %}text-rose{% endif %}">
+                {% if mvt.movement_type == 'IN' %}+{% else %}−{% endif %}{{ mvt.quantity }}
+              </td>
+              <td class="px-5 py-3 text-night-500">{{ mvt.description|default:"—" }}</td>
+              <td class="px-5 py-3 text-night-600">{{ mvt.user.get_full_name }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-5 py-10 text-center text-night-400 text-sm">
+                <i class="fa-solid fa-inbox text-2xl text-night-300 block mb-2"></i>
+                Aucun mouvement enregistré
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite -->
+  <div class="space-y-5">
+    <!-- Fournisseur -->
+    <div class="card p-5">
+      <h3 class="font-display font-600 text-night-800 mb-4 text-sm flex items-center gap-2">
+        <i class="fa-solid fa-truck text-indigo text-xs"></i> Fournisseur
+      </h3>
+      <div class="flex items-center gap-3 p-3 bg-night-50 rounded-lg">
+        <div class="w-10 h-10 bg-indigo/10 rounded-lg flex items-center justify-center text-indigo font-600">
+          {{ object.supplier.name|first|upper }}
+        </div>
+        <div>
+          <p class="font-500 text-night-800 text-sm">{{ object.supplier.name }}</p>
+          <p class="text-night-400 text-xs">{{ object.supplier.email }}</p>
+        </div>
+      </div>
+      <a href="{%url 'stock:supplier_detail' object.supplier.pk%}" class="mt-3 text-xs text-indigo hover:underline flex items-center gap-1">
+        <i class="fa-solid fa-external-link-alt text-xs"></i> Voir la fiche fournisseur
+      </a>
+    </div>
+
+   
+
+    
+
+    <!-- Actions destructives -->
+    {% if perms.stock.delete_product %}
+    <div class="card p-5 border-rose/30">
+      <h3 class="font-600 text-rose text-sm mb-3">Zone de danger</h3>
+      <a href="{% url 'stock:product_delete' object.pk %}"
+        class="btn btn-danger w-full justify-center text-sm"
+        >
+        <i class="fa-solid fa-trash"></i> Supprimer le produit
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

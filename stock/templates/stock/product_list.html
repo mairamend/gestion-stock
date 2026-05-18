@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Produits{% endblock %}
+{% block nav_produits %}active text-white{% endblock %}
+{% block page_title %}Produits{% endblock %}
+{% block page_subtitle %}{{ products.paginator.count}} références en stock{% endblock %}
+
+{% block header_actions %}
+{% if perms.stock.add_product %}
+<a href="{% url 'stock:product_create'%}" class="btn btn-primary text-sm">
+  <i class="fa-solid fa-plus"></i> Nouveau produit
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Filtres -->
+<div class="card p-4 mb-6">
+  <form method="get" class="flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-48">
+      <label class="form-label">Recherche</label>
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-night-400"><i class="fa-solid fa-search text-sm"></i></span>
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Nom, référence…" class="form-input pl-9"/>
+      </div>
+    </div>
+    
+    <div class="w-48">
+      <label class="form-label">Fournisseur</label>
+      <select name="supplier" class="form-select">
+        <option value="">Tous</option>
+        {% for f in suppliers%}
+        <option value="{{ f.pk }}" {% if request.GET.supplier == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="w-40">
+      <label class="form-label">Stock</label>
+      <select name="status" class="form-select">
+        <option value="">Tous</option>
+        <option value="low" {% if request.GET.status == "low" %}selected{% endif %}>Stock bas ⚠️</option>
+        <option value="normal" {% if request.GET.status == "normal" %}selected{% endif %}>Normal ✓</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <i class="fa-solid fa-filter"></i> Filtrer
+    </button>
+    <a href="{% url 'stock:product_list' %}" class="btn btn-secondary">
+      <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+    </a>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-night-50 border-b border-night-200">
+        <tr>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">
+            <input type="checkbox" class="w-4 h-4 accent-indigo rounded cursor-pointer"/>
+          </th>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Produit</th>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Référence</th>
+          
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Fournisseur</th>
+          <th class="px-5 py-4 text-right text-xs text-night-400 font-500 uppercase tracking-wide">Prix unitaire</th>
+          <th class="px-5 py-4 text-center text-xs text-night-400 font-500 uppercase tracking-wide">Stock</th>
+          <th class="px-5 py-4 text-center text-xs text-night-400 font-500 uppercase tracking-wide">Statut</th>
+          <th class="px-5 py-4 text-right text-xs text-night-400 font-500 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-night-100">
+        {% for produit in products %}
+        <tr class="table-row">
+          <td class="px-5 py-4">
+            <input type="checkbox" class="w-4 h-4 accent-indigo rounded cursor-pointer"/>
+          </td>
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-indigo/10 rounded-lg flex items-center justify-center text-indigo text-xs font-600">
+                {{ produit.name|first|upper }}
+              </div>
+              <div>
+                <p class="font-500 text-night-800">{{ produit.name }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-5 py-4 text-night-500 font-mono text-xs">{{ produit.reference }}</td>
+         
+          <td class="px-5 py-4 text-night-600">{{ produit.supplier.name }}</td>
+          <td class="px-5 py-4 text-right font-display font-600 text-night-800">{{ produit.price|floatformat:0 }} FCFA</td>
+          <td class="px-5 py-4 text-center">
+            <span class="font-display font-600 {% if produit.quantite_stock <= produit.seuil_alerte %}text-amber{% else %}text-night-800{% endif %}">
+              {{ produit.quantity_in_stock }}
+            </span>
+          </td>
+          <td class="px-5 py-4 text-center">
+            {% if produit.quantity_in_stock == 0 %}
+            <span class="badge bg-rose/10 text-rose-dark">Rupture</span>
+            {% elif produit.quantity_in_stock <= produit.min_threshold %}
+            <span class="badge bg-amber/15 text-amber-dark">
+              <i class="fa-solid fa-triangle-exclamation text-xs mr-1"></i>Stock bas
+            </span>
+            {% else %}
+            <span class="badge bg-emerald/10 text-emerald-dark">
+              <i class="fa-solid fa-check text-xs mr-1"></i>Normal
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4">
+            <div class="flex items-center justify-end gap-1">
+              <a href="{% url 'stock:product_detail' produit.pk %}" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-night-100 text-night-400 hover:text-night-700 transition-colors" title="Voir">
+                <i class="fa-solid fa-eye text-sm"></i>
+              </a>
+              {% if perms.stock.change_product %}
+              <a href="{% url 'stock:product_edit' produit.pk %}" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-indigo/10 text-night-400 hover:text-indigo transition-colors" title="Modifier">
+                <i class="fa-solid fa-pencil text-sm"></i>
+              </a>
+              {% endif %}
+              {% if perms.stock.delete_product %}
+              <a href="{% url 'stock:product_delete' produit.pk %}" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-rose/10 text-night-400 hover:text-rose transition-colors" title="Supprimer">
+                <i class="fa-solid fa-trash text-sm"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        
+        <tr>
+              <td colspan="4" class="px-5 py-10 text-center text-night-400 text-sm">
+                <i class="fa-solid fa-inbox text-2xl text-night-300 block mb-2"></i>Aucun produit .
+              </td>
+            </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="px-5 py-4 border-t border-night-200 flex items-center justify-between">
+    <p class="text-sm text-night-400">
+      Affichage de {{ products.start_index }}–{{ products.end_index }} sur {{ products.paginator.count }} produits
+    </p>
+    <div class="flex items-center gap-1">
+      {% if products.has_previous %}
+      <a href="?page={{ products.previous_page_number }}&{{ request.GET.urlencode }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 hover:bg-night-100 text-night-600 transition-colors">
+        <i class="fa-solid fa-chevron-left text-xs"></i>
+      </a>
+      {% else %}
+      <button disabled class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 text-night-300 cursor-not-allowed">
+        <i class="fa-solid fa-chevron-left text-xs"></i>
+      </button>
+      {% endif %}
+
+      {% for num in products.paginator.page_range %}
+        {% if products.number == num %}
+        <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo text-white text-sm font-500">{{ num }}</span>
+        {% elif num|add:"-2" <= products.number and num <= products.number|add:"2" %}
+        <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 hover:bg-night-100 text-night-600 text-sm transition-colors">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if products.has_next %}
+      <a href="?page={{ products.next_page_number }}&{{ request.GET.urlencode }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 hover:bg-night-100 text-night-600 transition-colors">
+        <i class="fa-solid fa-chevron-right text-xs"></i>
+      </a>
+      {% else %}
+      <button disabled class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 text-night-300 cursor-not-allowed">
+        <i class="fa-solid fa-chevron-right text-xs"></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

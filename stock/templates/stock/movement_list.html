@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Mouvements de stock{% endblock %}
+{% block nav_mouvements %}active text-white{% endblock %}
+{% block page_title %}Mouvements de stock{% endblock %}
+{% block page_subtitle %}Historique complet des entrées et sorties{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'stock:movement_create' %}" class="btn btn-primary text-sm">
+  <i class="fa-solid fa-plus"></i> Nouveau mouvement
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap gap-2 mb-6">
+  <a href="{% url 'stock:movement_list' %}{% if request.GET.date_debut %}?date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}" 
+     class="btn {% if not request.GET.type %}btn-primary{% else %}btn-secondary{% endif %} text-xs">
+    Tous
+  </a>
+  <a href="?type=IN{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}" 
+     class="btn {% if request.GET.type == 'IN' %}btn-primary{% else %}btn-secondary{% endif %} text-xs">
+    <i class="fa-solid fa-arrow-down text-emerald"></i> Entrées
+  </a>
+  <a href="?type=OUT{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}" 
+     class="btn {% if request.GET.type == 'OUT' %}btn-primary{% else %}btn-secondary{% endif %} text-xs">
+    <i class="fa-solid fa-arrow-up text-rose"></i> Sorties
+  </a>
+
+  <div class="ml-auto flex gap-2">
+    <form method="get" class="flex gap-2 items-center">
+      {% if request.GET.type %}<input type="hidden" name="type" value="{{ request.GET.type }}"/>{% endif %}
+      
+      <div class="relative">
+        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-night-400 text-xs"><i class="fa-solid fa-calendar"></i></span>
+        <input type="date" name="date_debut" value="{{ request.GET.date_debut|default:'' }}" class="form-input text-xs pl-8 py-2 w-36" title="Date de début"/>
+      </div>
+      
+      <span class="text-night-400 text-sm">→</span>
+      
+      <div class="relative">
+        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-night-400 text-xs"><i class="fa-solid fa-calendar"></i></span>
+        <input type="date" name="date_fin" value="{{ request.GET.date_fin|default:'' }}" class="form-input text-xs pl-8 py-2 w-36" title="Date de fin"/>
+      </div>
+      
+      <button type="submit" class="btn btn-secondary text-xs">Filtrer</button>
+
+      {% if request.GET.type or request.GET.date_debut or request.GET.date_fin %}
+        <a href="{% url 'stock:movement_list' %}" class="btn bg-slate-100 text-slate-600 text-xs py-2 px-2.5 rounded-lg" title="Effacer les filtres">
+          <i class="fa-solid fa-rotate-right"></i>
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="card p-4 flex items-center gap-4 bg-white shadow-sm border border-night-200">
+    <div class="w-10 h-10 bg-emerald/10 rounded-xl flex items-center justify-center">
+      <i class="fa-solid fa-arrow-down text-emerald"></i>
+    </div>
+    <div>
+      <p class="text-xs text-night-400">Total entrées</p>
+      <p class="text-xl font-display font-600 text-emerald">+{{ total_entrees|default:"0" }}</p>
+    </div>
+  </div>
+  <div class="card p-4 flex items-center gap-4 bg-white shadow-sm border border-night-200">
+    <div class="w-10 h-10 bg-rose/10 rounded-xl flex items-center justify-center">
+      <i class="fa-solid fa-arrow-up text-rose"></i>
+    </div>
+    <div>
+      <p class="text-xs text-night-400">Total sorties</p>
+      <p class="text-xl font-display font-600 text-rose">−{{ total_sorties|default:"0" }}</p>
+    </div>
+  </div>
+  <div class="card p-4 flex items-center gap-4 bg-white shadow-sm border border-night-200">
+    <div class="w-10 h-10 bg-indigo/10 rounded-xl flex items-center justify-center">
+      <i class="fa-solid fa-list text-indigo"></i>
+    </div>
+    <div>
+      <p class="text-xs text-night-400">Nombre d'opérations</p>
+      <p class="text-xl font-display font-600 text-night-800">{{ paginator.count|default:"0" }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="card overflow-hidden bg-white shadow-sm border border-night-200">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-night-50 border-b border-night-200">
+        <tr>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Date & heure</th>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Produit</th>
+          <th class="px-5 py-4 text-center text-xs text-night-400 font-500 uppercase tracking-wide">Type</th>
+          <th class="px-5 py-4 text-right text-xs text-night-400 font-500 uppercase tracking-wide">Quantité</th>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Motif</th>
+          <th class="px-5 py-4 text-left text-xs text-night-400 font-500 uppercase tracking-wide">Opérateur</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-night-100">
+        {% for mvt in movements %}
+        <tr class="hover:bg-night-50/50 transition-colors">
+          <td class="px-5 py-4 text-xs text-night-500 font-mono">
+            <p>{{ mvt.date|date:"d/m/Y" }}</p>
+            <p class="text-night-400">{{ mvt.date|date:"H:i" }}</p>
+          </td>
+          <td class="px-5 py-4">
+            <a href="{% url 'stock:product_detail' mvt.product.pk %}" class="font-500 text-night-800 hover:text-indigo transition-colors">
+              {{ mvt.product.name }}
+            </a>
+            <p class="text-xs text-night-400 font-mono">{{ mvt.product.reference }}</p>
+          </td>
+          <td class="px-5 py-4 text-center">
+            {% if mvt.movement_type == 'IN' %}
+            <span class="badge bg-emerald/10 text-emerald-dark"><i class="fa-solid fa-arrow-down text-xs mr-1"></i>Entrée</span>
+            {% else %}
+            <span class="badge bg-rose/10 text-rose-dark"><i class="fa-solid fa-arrow-up text-xs mr-1"></i>Sortie</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4 text-right font-display font-600 text-lg {% if mvt.movement_type == 'IN' %}text-emerald{% else %}text-rose{% endif %}">
+            {% if mvt.movement_type == 'IN' %}+{% else %}−{% endif %}{{ mvt.quantity }}
+          </td>
+          <td class="px-5 py-4 text-night-500 text-xs max-w-xs truncate">{{ mvt.description|default:"—" }}</td>
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full bg-indigo flex items-center justify-center text-white text-xs font-600">
+                {{ mvt.user.first_name|first|upper }}
+              </div>
+              <span class="text-night-600 text-xs">{{ mvt.user.get_full_name}}</span>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-5 py-10 text-center text-night-400 text-sm">
+            <i class="fa-solid fa-inbox text-2xl text-night-300 block mb-2"></i>Aucun mouvement enregistré.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  {% if is_paginated %}
+  <div class="px-5 py-4 border-t border-night-200 flex items-center justify-between">
+    <p class="text-sm text-night-400">{{ paginator.count }} mouvements au total</p>
+    <div class="flex items-center gap-1">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 hover:bg-night-100 text-night-600 transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></a>
+      {% endif %}
+      <span class="px-3 py-1 text-sm text-night-600">Page {{ page_obj.number }} / {{ paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-night-200 hover:bg-night-100 text-night-600 transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Modifier {{ object.name }}{% else %}Ajouter un produit{% endif %}{% endblock %}
+
+{% block nav_produits %}active{% endblock %}
+
+{% block page_title %}{% if object %}Modifier le produit : {{ object.name }}{% else %}Nouveau Produit{% endif %}{% endblock %}
+{% block page_subtitle %}{% if object %}Modifiez les informations de cette référence.{% else %}Ajoutez une nouvelle référence d'article dans votre catalogue.{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="card p-8 shadow-sm bg-white">
+        
+        <form method="post" class="space-y-6">
+          {% csrf_token %}
+
+          <div>
+            <label class="form-label" for="id_name">Nom du produit</label>
+            <input type="text" name="name" id="id_name" class="form-input" value="{{ form.name.value|default:'' }}" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="id_reference">Référence (Unique)</label>
+            <input type="text" name="reference" id="id_reference" class="form-input" value="{{ form.reference.value|default:'' }}" required>
+            {% if form.reference.errors %}
+              <p class="text-rose text-xs mt-1">{{ form.reference.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label" for="id_price">Prix unitaire (€)</label>
+              <input type="number" name="price" id="id_price" step="0.01" class="form-input" value="{{ form.price.value|default:'' }}" required>
+            </div>
+            <div>
+              <label class="form-label" for="id_min_threshold">Seuil d'alerte</label>
+              <input type="number" name="min_threshold" id="id_min_threshold" class="form-input" value="{{ form.min_threshold.value|default:'5' }}" required>
+            </div>
+          </div>
+
+          {% if not object %}
+          <div>
+            <label class="form-label" for="id_quantity_in_stock">Quantité initiale en stock</label>
+            <input type="number" name="quantity_in_stock" id="id_quantity_in_stock" class="form-input" value="0" required>
+          </div>
+          {% endif %}
+
+          <div>
+            <label class="form-label" for="id_supplier">Fournisseur associé</label>
+            <select name="supplier" id="id_supplier" class="form-select" required>
+              <option value="">---------</option>
+              {% for value, text in form.fields.supplier.choices %}
+                <option value="{{ value }}" {% if form.supplier.value == value %}selected{% endif %}>
+                  {{ text }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-night-200">
+            <a href="{% url 'stock:product_list' %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary shadow-sm">
+              {% if object %}
+                <i class="fa-solid fa-pen-to-square"></i> Enregistrer les modifications
+              {% else %}
+                <i class="fa-solid fa-plus"></i> Créer le produit
+              {% endif %}
+            </button>
+          </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

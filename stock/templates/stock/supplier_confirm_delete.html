@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10 p-6 bg-white border border-night-200 rounded-2xl shadow-sm">
+    <div class="text-center space-y-4">
+        <div class="w-12 h-12 bg-rose/10 text-rose rounded-full flex items-center justify-center mx-auto text-xl">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h2 class="text-xl font-bold text-night-800">Supprimer le fournisseur</h2>
+        <p class="text-sm text-night-500">
+            Êtes-vous sûr de vouloir supprimer le fournisseur <strong class="text-night-700">"{{ object.name }}"</strong> ? Cette action est irréversible.
+        </p>
+    </div>
+
+    <form method="post" class="mt-6 flex gap-3">
+        {% csrf_token %}
+        <a href="{% url 'stock:supplier_list' %}" class="btn btn-secondary flex-1 justify-center py-2 text-xs">
+            Annuler
+        </a>
+        <button type="submit" class="btn bg-rose hover:bg-rose-dark text-white flex-1 justify-center py-2 text-xs font-medium rounded-xl">
+            Confirmer la suppression
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+
+{% extends "base.html" %}
+{% block title %}Supprimer {{ object.name }}{% endblock %}
+{% block nav_produits %}active text-white{% endblock %}
+{% block page_title %}Supprimer un produit{% endblock %}
+{% block page_subtitle %}Cette action est irréversible{% endblock %}
+
+{% block header_actions %}
+<a href="/{%url 'stock:product_list'%}" class="btn btn-secondary text-sm"><i class="fa-solid fa-arrow-left"></i> Annuler</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="card p-8 text-center">
+    <div class="w-16 h-16 bg-rose/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+      <i class="fa-solid fa-trash text-rose text-2xl"></i>
+    </div>
+    <h2 class="text-xl font-display font-600 text-night-800 mb-2">Confirmer la suppression</h2>
+    <p class="text-night-500 text-sm mb-1">
+      Vous êtes sur le point de supprimer définitivement le produit
+    </p>
+    <p class="text-night-800 font-600 text-base mb-1">« {{ object.name }} »</p>
+    <p class="text-night-400 text-xs font-mono mb-6">{{ object.reference }}</p>
+
+    <div class="bg-rose/5 border border-rose/20 rounded-lg p-4 text-left text-sm text-rose mb-6 space-y-1">
+      <p><i class="fa-solid fa-circle-exclamation mr-1"></i> Tout l'historique des mouvements de ce produit sera supprimé.</p>
+      <p><i class="fa-solid fa-circle-exclamation mr-1"></i> Cette action est <strong>irréversible</strong>.</p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="flex gap-3 justify-center">
+        <button type="submit" class="btn btn-danger px-6">
+          <i class="fa-solid fa-trash"></i> Oui, supprimer définitivement
+        </button>
+        <a href="{%url 'stock:product_list'%}" class="btn btn-secondary px-6">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
