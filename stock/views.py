@@ -7,6 +7,49 @@ from .models import Product, Supplier, StockMovement
 from .forms import StockMovementForm
 from django.db.models import Q
 from django.db.models import Sum, F, Count
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.contrib import messages
+from .forms import ProfileUpdateForm
+
+@login_required
+def profile_edit_view(request):
+    # On récupère le profil de l'utilisateur connecté (adapte selon ta relation)
+    user_profile = request.user 
+
+    if request.method == 'POST':
+        # On regarde quel formulaire a été soumis grâce au nom du bouton submit
+        if 'submit_profile' in request.POST:
+            # IMPORTANT: request.FILES est obligatoire pour enregistrer une image !
+            profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=user_profile)
+            password_form = PasswordChangeForm(user=request.user)
+            
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, "Votre profil a été mis à jour avec succès.")
+                return redirect('stock:profile_edit')
+
+        elif 'submit_password' in request.POST:
+            profile_form = ProfileUpdateForm(instance=user_profile)
+            password_form = PasswordChangeForm(user=request.user, data=request.POST)
+            
+            if password_form.is_valid():
+                user = password_form.save()
+                # Cette ligne évite que l'utilisateur soit déconnecté après avoir changé son mot de passe
+                update_session_auth_hash(request, user)
+                messages.success(request, "Votre mot de passe a été modifié avec succès.")
+                return redirect('stock:profile_edit')
+    else:
+        profile_form = ProfileUpdateForm(instance=user_profile)
+        password_form = PasswordChangeForm(user=request.user)
+
+    context = {
+        'profile_form': profile_form,
+        'password_form': password_form,
+    }
+    return render(request, 'stock/profile.html', context)
 # Create your views here.
 
 class DashboardView(LoginRequiredMixin, TemplateView):

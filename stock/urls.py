@@ -1,6 +1,7 @@
 from django.urls import path 
-from .views import ProductListView,DashboardView, ProductDetailView, SupplierListView,SupplierDeleteView,SupplierUpdateView,SupplierCreateView, ProductCreateView,SupplierDetailView,ProductUpdateView,ProductDeleteView,StockMovementCreateView,StockMovementListView
-
+from .views import profile_edit_view, ProductListView,DashboardView, ProductDetailView, SupplierListView,SupplierDeleteView,SupplierUpdateView,SupplierCreateView, ProductCreateView,SupplierDetailView,ProductUpdateView,ProductDeleteView,StockMovementCreateView,StockMovementListView
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name =  'stock'
 
@@ -18,5 +19,8 @@ urlpatterns =  [
     path('suppliers/<int:pk>/delete/',SupplierDeleteView.as_view(), name='supplier_delete'),
     path('movements/', StockMovementListView.as_view(), name='movement_list'),
     path('movements/add/', StockMovementCreateView.as_view(), name='movement_create'),
-    
+    path('profile/edit/', profile_edit_view, name='profile_edit'),
 ]
+# On ajoute ceci uniquement en mode développement (DEBUG = True)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

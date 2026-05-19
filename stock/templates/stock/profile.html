@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Mon Profil{% endblock %}
+{% block page_title %}Mon Profil & Sécurité{% endblock %}
+{% block page_subtitle %}Gérez vos informations et votre mot de passe{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+  
+  <div class="lg:col-span-2 card p-6 space-y-6">
+    <h3 class="text-sm font-bold text-night-800 uppercase tracking-wide border-b border-night-100 pb-2">
+      <i class="fa-solid fa-user text-indigo mr-2"></i> Informations personnelles
+    </h3>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-5">
+      {% csrf_token %}
+      
+      <div class="flex items-center gap-4 p-4 bg-night-50 rounded-xl">
+        <div class="w-16 h-16 rounded-full bg-night-200 overflow-hidden flex items-center justify-center border-2 border-white shadow-sm">
+          {% if request.user.photo_profil %}
+            <img src="{{ request.user.photo_profil.url }}" alt="Avatar" class="w-full h-full object-cover">
+          {% else %}
+            <span class="text-night-500 font-bold text-2xl">{{ request.user.first_name|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-night-700 mb-1">Modifier la photo de profil</label>
+          {{ profile_form.photo_profil }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs font-semibold text-night-700">Prénom</label>
+          {{ profile_form.first_name }}
+        </div>
+        <div>
+          <label class="form-label text-xs font-semibold text-night-700">Nom</label>
+          {{ profile_form.last_name }}
+        </div>
+      </div>
+
+      <div class="border-t border-night-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs text-night-400">Adresse Email (Non modifiable)</label>
+          <input type="email" value="{{ request.user.email }}" disabled class="form-input mt-1 block w-full bg-night-50 text-night-400 border-night-200 cursor-not-allowed text-sm rounded-xl"/>
+        </div>
+        <div>
+          <label class="form-label text-xs text-night-400">Date de naissance (Non modifiable)</label>
+          <input type="text" value="{{ request.user.date_naissance|date:'d/m/Y' }}" disabled class="form-input mt-1 block w-full bg-night-50 text-night-400 border-night-200 cursor-not-allowed text-sm rounded-xl"/>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="submit" name="submit_profile" class="btn btn-primary text-xs px-4 py-2">
+          <i class="fa-solid fa-floppy-disk"></i> Enregistrer le profil
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="lg:col-span-1 card p-6 space-y-6 h-fit">
+    <h3 class="text-sm font-bold text-night-800 uppercase tracking-wide border-b border-night-100 pb-2">
+      <i class="fa-solid fa-lock text-rose mr-2"></i> Sécurité du compte
+    </h3>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      
+      {% for field in password_form %}
+        <div>
+          <label class="block text-xs font-semibold text-night-700 mb-1">{{ field.label }}</label>
+          <input type="password" name="{{ field.name }}" class="form-input block w-full rounded-xl border-night-200 text-sm py-2"/>
+          {% if field.errors %}
+            <p class="text-rose text-[11px] mt-1">{{ field.errors.0 }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="pt-2">
+        <button type="submit" name="submit_password" class="btn bg-rose hover:bg-rose-dark text-white text-xs w-full justify-center py-2 rounded-xl transition-all font-medium">
+          <i class="fa-solid fa-key"></i> Modifier le mot de passe
+        </button>
+      </div>
+    </form>
+  </div>
+<!-- SEYNIFATY1990 -->
+</div>
+{% endblock %}

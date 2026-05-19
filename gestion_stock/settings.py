@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -121,6 +122,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+# URL publique pour accéder aux médias
+MEDIA_URL = '/media/'
+
+# Dossier physique sur ton ordinateur où Django va enregistrer les images
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 AUTH_USER_MODEL = 'stock.User'
 
 LOGIN_URL = 'login'
